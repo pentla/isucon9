@@ -29,7 +29,7 @@ jobs:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
         SOURCE: sample/
         REMOTE_HOST: 52.192.192.12
-        REMOTE_USER: ubuntu
+        REMOTE_USER: root
         TARGET: /home
 
     # Runs a single command using the runners shell
