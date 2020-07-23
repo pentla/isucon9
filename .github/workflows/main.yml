@@ -24,7 +24,7 @@ jobs:
       uses: easingthemes/ssh-deploy@v2.1.4
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
-        SOURCE: /sample
+        SOURCE: sample
         REMOTE_HOST: 52.192.192.12
         REMOTE_USER: ubuntu
         TARGET: /home
