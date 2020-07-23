@@ -357,6 +357,12 @@ func main() {
 	// Assets
 	mux.Handle(pat.Get("/*"), http.FileServer(http.Dir("../public")))
 	log.Fatal(http.ListenAndServe(":8000", mux))
+        f, err := os.OpenFile("/var/log/isucaritestlog", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+        if err != nil {
+            log.Fatalf("error opening file: %v", err)
+        }
+        defer f.Close()
+        log.SetOutput(f)
 }
 
 func getSession(r *http.Request) *sessions.Session {
