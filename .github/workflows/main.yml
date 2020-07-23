@@ -39,7 +39,7 @@ jobs:
         SOURCE: webapp/go/isucari
         REMOTE_HOST: ${{ secrets.IP_ADDRESS }}
         REMOTE_USER: root
-        TARGET: /home/results
+        TARGET: /home/isucon/isucari/webapp/go
 
     # Runs a single command using the runners shell
     - name: Run a one-line script
