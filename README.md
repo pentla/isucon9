@@ -42,6 +42,12 @@ $ mv v3_bench1 images
 
 $ make
 $ ./bin/benchmarker
+
+# go開発でホットリロードを導入したい場合
+
+$ GO111MODULE=off go get github.com/oxequa/realize
+$ cd webapp/go
+$ realize start
 ```
 
 ## ベンチマーカー
