@@ -357,12 +357,12 @@ func main() {
 	// Assets
 	mux.Handle(pat.Get("/*"), http.FileServer(http.Dir("../public")))
 	log.Fatal(http.ListenAndServe(":8000", mux))
-        f, err := os.OpenFile("/var/log/isucaritestlog", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-        if err != nil {
-            log.Fatalf("error opening file: %v", err)
-        }
-        defer f.Close()
-        log.SetOutput(f)
+	f, err := os.OpenFile("/var/log/isucaritestlog", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+	log.SetOutput(f)
 }
 
 func getSession(r *http.Request) *sessions.Session {
@@ -691,10 +691,44 @@ func getNewCategoryItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userIDUnique := make(map[int64]struct{})
+	var userIds []interface{}
+	for _, i := range items {
+		id := i.SellerID
+		if _, ok := userIDUnique[id]; !ok {
+			userIds = append(userIds, id)
+			userIDUnique[id] = struct{}{}
+		}
+	}
+	var users map[int64]UserSimple
+	if len(userIds) > 0 {
+		query, args, err := sqlx.In("SELECT * FROM `users` WHERE `id` IN (?)", userIds)
+		if err != nil {
+			log.Print(err)
+			outputErrorMsg(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		var s []User
+		err = dbx.SelectContext(r.Context(), &s, query, args...)
+		if err != nil {
+			log.Print(err)
+			outputErrorMsg(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		users = make(map[int64]UserSimple, len(s))
+		for _, u := range s {
+			users[u.ID] = UserSimple{
+				ID:           u.ID,
+				AccountName:  u.AccountName,
+				NumSellItems: u.NumSellItems,
+			}
+		}
+	}
+
 	itemSimples := []ItemSimple{}
 	for _, item := range items {
-		seller, err := getUserSimpleByID(dbx, item.SellerID)
-		if err != nil {
+		seller, ok := users[item.SellerID]
+		if !ok {
 			outputErrorMsg(w, http.StatusNotFound, "seller not found")
 			return
 		}
