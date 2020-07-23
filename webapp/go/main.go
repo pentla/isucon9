@@ -17,6 +17,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
+	"github.com/isucon/isucon9-qualify/webapp/go/api"
 	"github.com/jmoiron/sqlx"
 	goji "goji.io"
 	"goji.io/pat"
@@ -981,7 +982,7 @@ func getTransactions(w http.ResponseWriter, r *http.Request) {
 				tx.Rollback()
 				return
 			}
-			ssr, err := APIShipmentStatus(getShipmentServiceURL(), &APIShipmentStatusReq{
+			ssr, err := api.APIShipmentStatus(getShipmentServiceURL(), &api.APIShipmentStatusReq{
 				ReserveID: shipping.ReserveID,
 			})
 			if err != nil {
@@ -1381,7 +1382,7 @@ func postBuy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scr, err := APIShipmentCreate(getShipmentServiceURL(), &APIShipmentCreateReq{
+	scr, err := api.APIShipmentCreate(getShipmentServiceURL(), &api.APIShipmentCreateReq{
 		ToAddress:   buyer.Address,
 		ToName:      buyer.AccountName,
 		FromAddress: seller.Address,
@@ -1395,7 +1396,7 @@ func postBuy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pstr, err := APIPaymentToken(getPaymentServiceURL(), &APIPaymentServiceTokenReq{
+	pstr, err := api.APIPaymentToken(getPaymentServiceURL(), &api.APIPaymentServiceTokenReq{
 		ShopID: PaymentServiceIsucariShopID,
 		Token:  rb.Token,
 		APIKey: PaymentServiceIsucariAPIKey,
@@ -1551,7 +1552,7 @@ func postShip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	img, err := APIShipmentRequest(getShipmentServiceURL(), &APIShipmentRequestReq{
+	img, err := api.APIShipmentRequest(getShipmentServiceURL(), &api.APIShipmentRequestReq{
 		ReserveID: shipping.ReserveID,
 	})
 	if err != nil {
@@ -1682,7 +1683,7 @@ func postShipDone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ssr, err := APIShipmentStatus(getShipmentServiceURL(), &APIShipmentStatusReq{
+	ssr, err := api.APIShipmentStatus(getShipmentServiceURL(), &api.APIShipmentStatusReq{
 		ReserveID: shipping.ReserveID,
 	})
 	if err != nil {
@@ -1822,7 +1823,7 @@ func postComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ssr, err := APIShipmentStatus(getShipmentServiceURL(), &APIShipmentStatusReq{
+	ssr, err := api.APIShipmentStatus(getShipmentServiceURL(), &api.APIShipmentStatusReq{
 		ReserveID: shipping.ReserveID,
 	})
 	if err != nil {
