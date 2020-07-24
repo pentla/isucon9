@@ -289,6 +289,12 @@ func main() {
 		logdir = "./"
 	}
         logpath := path.Join(logdir, logname)
+        logfile, logerr := os.OpenFile(logpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+        if logerr != nil {
+                panic("cannnot open" + logdir + ":" + logerr.Error())
+        }
+        defer logfile.Close()
+        log.SetOutput(io.MultiWriter(logfile, os.Stdout))
 
 	host := os.Getenv("MYSQL_HOST")
 	if host == "" {
@@ -368,13 +374,7 @@ func main() {
 	// Assets
 	mux.Handle(pat.Get("/*"), http.FileServer(http.Dir("../public")))
 
-        // ログ設定
-        logfile, err := os.OpenFile(logpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-        if err != nil {
-                panic("cannnot open" + logdir + ":" + err.Error())
-        }
-        defer logfile.Close()
-        log.SetOutput(io.MultiWriter(logfile, os.Stdout))
+        log.Print("staring app...")
 	log.Fatal(http.ListenAndServe(":8000", mux))
 }
 
