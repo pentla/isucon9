@@ -6,17 +6,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strconv"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
+	"github.com/isucon/isucon9-qualify/webapp/go/api"
 	"github.com/jmoiron/sqlx"
 	goji "goji.io"
 	"goji.io/pat"
@@ -279,6 +282,20 @@ func init() {
 }
 
 func main() {
+        // ログをファイルに吐く設定
+        logname := time.Now().Format("2006-01-02_150405.log")
+        logdir := os.Getenv("LOG_DIR")
+	if logdir == "" {
+		logdir = "./"
+	}
+        logpath := path.Join(logdir, logname)
+        logfile, logerr := os.OpenFile(logpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+        if logerr != nil {
+                panic("cannnot open" + logdir + ":" + logerr.Error())
+        }
+        defer logfile.Close()
+        log.SetOutput(io.MultiWriter(logfile, os.Stdout))
+
 	host := os.Getenv("MYSQL_HOST")
 	if host == "" {
 		host = "127.0.0.1"
@@ -356,6 +373,8 @@ func main() {
 	mux.HandleFunc(pat.Get("/users/setting"), getIndex)
 	// Assets
 	mux.Handle(pat.Get("/*"), http.FileServer(http.Dir("../public")))
+
+        log.Print("staring app...")
 	log.Fatal(http.ListenAndServe(":8000", mux))
         f, err := os.OpenFile("/var/log/isucaritestlog", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
         if err != nil {
@@ -987,7 +1006,7 @@ func getTransactions(w http.ResponseWriter, r *http.Request) {
 				tx.Rollback()
 				return
 			}
-			ssr, err := APIShipmentStatus(getShipmentServiceURL(), &APIShipmentStatusReq{
+			ssr, err := api.APIShipmentStatus(getShipmentServiceURL(), &api.APIShipmentStatusReq{
 				ReserveID: shipping.ReserveID,
 			})
 			if err != nil {
@@ -1387,7 +1406,7 @@ func postBuy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scr, err := APIShipmentCreate(getShipmentServiceURL(), &APIShipmentCreateReq{
+	scr, err := api.APIShipmentCreate(getShipmentServiceURL(), &api.APIShipmentCreateReq{
 		ToAddress:   buyer.Address,
 		ToName:      buyer.AccountName,
 		FromAddress: seller.Address,
@@ -1401,7 +1420,7 @@ func postBuy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pstr, err := APIPaymentToken(getPaymentServiceURL(), &APIPaymentServiceTokenReq{
+	pstr, err := api.APIPaymentToken(getPaymentServiceURL(), &api.APIPaymentServiceTokenReq{
 		ShopID: PaymentServiceIsucariShopID,
 		Token:  rb.Token,
 		APIKey: PaymentServiceIsucariAPIKey,
@@ -1557,7 +1576,7 @@ func postShip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	img, err := APIShipmentRequest(getShipmentServiceURL(), &APIShipmentRequestReq{
+	img, err := api.APIShipmentRequest(getShipmentServiceURL(), &api.APIShipmentRequestReq{
 		ReserveID: shipping.ReserveID,
 	})
 	if err != nil {
@@ -1688,7 +1707,7 @@ func postShipDone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ssr, err := APIShipmentStatus(getShipmentServiceURL(), &APIShipmentStatusReq{
+	ssr, err := api.APIShipmentStatus(getShipmentServiceURL(), &api.APIShipmentStatusReq{
 		ReserveID: shipping.ReserveID,
 	})
 	if err != nil {
@@ -1828,7 +1847,7 @@ func postComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ssr, err := APIShipmentStatus(getShipmentServiceURL(), &APIShipmentStatusReq{
+	ssr, err := api.APIShipmentStatus(getShipmentServiceURL(), &api.APIShipmentStatusReq{
 		ReserveID: shipping.ReserveID,
 	})
 	if err != nil {
