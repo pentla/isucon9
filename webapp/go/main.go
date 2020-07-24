@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -280,6 +282,14 @@ func init() {
 }
 
 func main() {
+        // ログをファイルに吐く設定
+        logname := time.Now().Format("2006-01-02_150405.log")
+        logdir := os.Getenv("LOG_DIR")
+	if logdir == "" {
+		logdir = "./"
+	}
+        logpath := path.Join(logdir, logname)
+
 	host := os.Getenv("MYSQL_HOST")
 	if host == "" {
 		host = "127.0.0.1"
@@ -357,6 +367,14 @@ func main() {
 	mux.HandleFunc(pat.Get("/users/setting"), getIndex)
 	// Assets
 	mux.Handle(pat.Get("/*"), http.FileServer(http.Dir("../public")))
+
+        // ログ設定
+        logfile, err := os.OpenFile(logpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+        if err != nil {
+                panic("cannnot open" + logdir + ":" + err.Error())
+        }
+        defer logfile.Close()
+        log.SetOutput(io.MultiWriter(logfile, os.Stdout))
 	log.Fatal(http.ListenAndServe(":8000", mux))
 }
 
